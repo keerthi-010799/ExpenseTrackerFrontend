@@ -8,7 +8,6 @@ const ExpanceTracker = () => {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        console.log("dispatched", expense);
         setData(expense);
     }, [expense])
 
@@ -54,56 +53,65 @@ const ExpanceTracker = () => {
     //total amount
     const totalAmount = (+totalIncome) - (+totalExpense);
 
-    console.log("expanceincome", totalAmount, totalExpense, totalIncome);
 
     return (
-        <>
-            <div><h3>Expance Tracker</h3>
-                <div className="container mt-4">
-                    <div className="row">
-                        <div className="col-md-4 mb-3">
-                            <div className="card shadow-sm text-center">
-                                <div className="card-body">
-                                    <h6 className="text-muted">Total Balance</h6>
-                                    <h4 className="text-primary">{totalAmount}</h4>
-                                </div>
-                            </div>
-                        </div>
+        <div className="container-fluid px-0">
+            <div className="mb-4">
+                <h3 className="mb-1">Expense Tracker</h3>
+                <p className="text-muted mb-0">A quick summary of your balance, trends, and recent activity.</p>
+            </div>
 
-                        <div className="col-md-4 mb-3">
-                            <div className="card shadow-sm text-center">
-                                <div className="card-body">
-                                    <h6 className="text-muted">Total Income</h6>
-                                    <h4 className="text-success">{totalIncome}</h4>
-                                </div>
-                            </div>
+            <div className="row g-3 mb-4">
+                <div className="col-12 col-md-6 col-xl-4">
+                    <div className="card border-0 shadow-sm h-100 text-center">
+                        <div className="card-body">
+                            <h6 className="text-muted">Total Balance</h6>
+                            <h4 className="text-primary mb-0">{totalAmount}</h4>
                         </div>
-
-                        <div className="col-md-4 mb-3">
-                            <div className="card shadow-sm text-center">
-                                <div className="card-body">
-                                    <h6 className="text-muted">Total Expense</h6>
-                                    <h4 className="text-danger">{totalExpense}</h4>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
-                <div className='d-flex flex-row'><ExpensePieChart data={data}
-                    filterType="all" /><IncomeExpenseBarChart data={data}
-                        filterType="all" /></div>
-                <div>
+
+                <div className="col-12 col-md-6 col-xl-4">
+                    <div className="card border-0 shadow-sm h-100 text-center">
+                        <div className="card-body">
+                            <h6 className="text-muted">Total Income</h6>
+                            <h4 className="text-success mb-0">{totalIncome}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-12 col-md-6 col-xl-4">
+                    <div className="card border-0 shadow-sm h-100 text-center">
+                        <div className="card-body">
+                            <h6 className="text-muted">Total Expense</h6>
+                            <h4 className="text-danger mb-0">{totalExpense}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row g-3 mb-4">
+                <div className="col-12 col-xl-6">
+                    <ExpensePieChart data={data} filterType="all" />
+                </div>
+                <div className="col-12 col-xl-6">
+                    <IncomeExpenseBarChart data={data} filterType="all" />
+                </div>
+            </div>
+
+            <div className="card border-0 shadow-sm">
+                <div className="card-body p-0">
                     <DataTable
                         columns={columns}
                         data={data}
                         pagination
                         highlightOnHover
                         striped
-                        responsive />
+                        responsive
+                    />
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 

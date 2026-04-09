@@ -1,15 +1,30 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// const savedExpenses =
-//     JSON.parse(localStorage.getItem("expenses")) || [];
+const matchesUser = (transaction, userId) => {
+    if (!userId) {
+        return true;
+    }
+
+    const transactionUserId =
+        transaction?.userId?._id ??
+        transaction?.userId?.id ??
+        transaction?.userId;
+
+    return String(transactionUserId) === String(userId);
+};
 
 // 🔥 API CALL inside Redux
 export const fetchTransactions = createAsyncThunk(
     "expense/fetchTransactions",
-    async () => {
-        const res = await axios.get("http://localhost:5000/api/transactions/");
-        return res.data;
+    async (userId) => {
+        let reqOptions = {
+            url: "http://localhost:5000/api/transactions/transaction",
+            method: "POST",
+            data: { apitype: "getTransaction", userId }
+        }
+        const res = await axios.request(reqOptions);
+        return res.data.filter((transaction) => matchesUser(transaction, userId));
     }
 );
 
@@ -26,8 +41,7 @@ const expenseSlice = createSlice({
     reducers: {
 
         addTranscation: (state, action) => {
-            state.expense.push({ id: state.expense.length + 1, ...action.payload });
-            localStorage.setItem("expenses", JSON.stringify(state.expense));
+            state.expense.push({ itemid: state.expense.length + 1, ...action.payload });
         }
     },
     extraReducers: (builder) => {

@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { clearStoredUser } from "../utils/auth";
 
 const Sidebar = (props) => {
-    const showSidebar = props.showSidebar;
+    const onNavigate = props.onNavigate;
     const location = useLocation();
-    const [activeMenu, setActiveMenu] = useState(location.pathname);
     const navigate = useNavigate();
 
     const menuItems = [
@@ -15,70 +14,36 @@ const Sidebar = (props) => {
     ];
 
     const navbarNavigate = (item) => {
-        setActiveMenu(item.pathname);
         navigate(item.pathname);
+        if (onNavigate) {
+            onNavigate();
+        }
     };
 
-    const handleLogout = () => {
-        // clear token or user data
-        localStorage.removeItem("user");
-
-        // redirect to login
-        navigate("/");
-    };
 
     return (
-        <div className="d-flex">
+        <div className="bg-primary text-white d-flex flex-column h-100 min-vh-100">
+            <div className="border-bottom border-light border-opacity-25 px-3 px-lg-4 py-4">
+                <h5 className="text-center mb-0 fw-semibold">Expense Tracker</h5>
+            </div>
 
-            {/* Sidebar */}
-            <div
-                className="bg-primary text-white d-flex flex-column"
-                style={{
-                    width: showSidebar ? "250px" : "0px",
-                    minHeight: "100vh",
-                    transition: "width 0.3s ease",
-                    overflow: "hidden"
-                }}
-            >
-                {showSidebar && (
-                    <>
-                        {/* Header */}
-                        <div>
-                            <h5 className="text-center my-4">Expense Tracker</h5>
-                        </div>
-
-                        {/* Menu */}
-                        <div className="flex-grow-1 px-2">
-                            <ul className="nav flex-column">
-                                {menuItems.map((item) => (
-                                    <li className="nav-item mb-2" key={item.id}>
-                                        <button
-                                            className={`btn w-100 text-start ${activeMenu === item.pathname
-                                                ? "btn-light text-primary"
-                                                : "btn-primary"
-                                                }`}
-                                            onClick={() => navbarNavigate(item)}
-                                        >
-                                            <i className={`bi ${item.icon} me-2`}></i>
-                                            {item.name}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-3 border-top">
+            <div className="flex-grow-1 px-2 px-lg-3 py-3">
+                <ul className="nav flex-column gap-2">
+                    {menuItems.map((item) => (
+                        <li className="nav-item" key={item.id}>
                             <button
-                                className="btn btn-danger w-100"
-                                onClick={handleLogout}
+                                className={`btn w-100 text-start border-0 ${location.pathname === item.pathname
+                                    ? "btn-light text-primary"
+                                    : "btn-primary text-white"
+                                    }`}
+                                onClick={() => navbarNavigate(item)}
                             >
-                                <i className="bi bi-box-arrow-right me-2"></i>
-                                Logout
+                                <i className={`bi ${item.icon} me-2`}></i>
+                                {item.name}
                             </button>
-                        </div>
-                    </>
-                )}
+                        </li>
+                    ))}
+                </ul>
             </div>
         </div>
     );

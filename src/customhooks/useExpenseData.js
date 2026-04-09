@@ -2,14 +2,17 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchTransactions } from "../redux/expenseslice";
+import { getStoredUser } from "../utils/auth";
 
 const useExpenseData = () => {
     const dispatch = useDispatch();
     const { expense } = useSelector((state) => state.expense);
+    const currentUser = getStoredUser();
+    const currentUserId = currentUser?.id;
 
     useEffect(() => {
-        dispatch(fetchTransactions());
-    }, [dispatch]);
+        dispatch(fetchTransactions(currentUserId));
+    }, [currentUserId, dispatch]);
 
     const pieData = expense.map(({ category, amount }) => ({
         name: category,
@@ -17,13 +20,12 @@ const useExpenseData = () => {
     }));
 
     const monthlyData = expense.reduce((acc, item) => {
-        let day, month, year;
+        let month, year;
 
         if (item.date.includes("/")) {
-            [day, month, year] = item.date.split("/");
+            [, month, year] = item.date.split("/");
         } else {
             const d = new Date(item.date);
-            day = d.getDate();
             month = d.getMonth() + 1;
             year = d.getFullYear();
         }

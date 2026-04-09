@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
 import axios from "axios";
+import { useDispatch } from "react-redux";
 import useExpenseData from "../customhooks/useExpenseData";
+import { fetchTransactions } from "../redux/expenseslice";
+import { getStoredUser } from "../utils/auth";
 
 
 const ManageTransaction = () => {
     const { expense } = useExpenseData();
+    const dispatch = useDispatch();
+    const currentUser = getStoredUser();
+    const currentUserId = currentUser?.id;
     const [search, setSearch] = useState("");
     const [data, setData] = useState([]);
 
@@ -19,7 +25,6 @@ const ManageTransaction = () => {
     const [id, setId] = useState("");
     //
     useEffect(() => {
-        console.log("dispatched", expense);
         setData(expense);
     }, [expense])
 
@@ -91,32 +96,26 @@ const ManageTransaction = () => {
     // Delete function
     const handleDelete = async (id) => {
         let reqOptions = {
-            url: `${"http://localhost:5000/api/transactions/delete/" + id}`,
-            method: "DELETE",
+            url: `${"http://localhost:5000/api/transactions/transaction"}`,
+            method: "POST",
+            data: { apitype: "deleteTransaction", id, userId: currentUserId }
         }
 
         let response = await axios.request(reqOptions);
-        console.log("resp", response, response.data);
         if (response.status === 200) {
             setAmount("");
             setCategory("");
             setDate("");
             setNotes("");
             setType("income");
-            const dataexp = response.data.row.map((item, index) => ({
-                ...item,
-                itemid: index + 1
-            }));
-            setData(dataexp)
+            dispatch(fetchTransactions(currentUserId));
         }
     };
 
     // Edit function
     const handleEdit = (row) => {
-        console.log("clicked edit", row, data)
         setShowModal(!showModal);
         const selectedItem = data.find(item => item._id === row);
-        console.log("newData", selectedItem);
         if (selectedItem) {
             setAmount(selectedItem.amount);
             setCategory(selectedItem.category);
@@ -129,41 +128,41 @@ const ManageTransaction = () => {
     };
     //edit apicall
     const EditTransaction = async () => {
-        console.log("trans data ", id, amount, category, type, date, note
-        )
         let headersList = {
             "Accept": "*/*",
             "Content-Type": "application/json"
         }
 
         let bodyContent = JSON.stringify({
-            "amount": amount,
-            "category": category,
-            "type": type,
-            "date": date,
-            "notes": note
+            "apitype": "updateTransaction",
+            "id": id,
+            "userId": currentUserId,
+            "data": {
+                "amount": amount,
+                "category": category,
+                "type": type,
+                "date": date,
+                "notes": note
+            }
         });
 
         let reqOptions = {
-            url: `${"http://localhost:5000/api/transactions/update/" + id}`,
-            method: "PUT",
+            url: `${"http://localhost:5000/api/transactions/transaction"}`,
+            method: "POST",
             headers: headersList,
             data: bodyContent,
         }
 
         let response = await axios.request(reqOptions);
-        console.log("resp", response.status, response.status === 200, response.data);
         if (response.status === 200) {
             setAmount("");
             setCategory("");
             setDate("");
             setNotes("");
+            setId("");
             setType("income");
-            const dataexp = response.data.map((item, index) => ({
-                ...item,
-                itemid: index + 1
-            }));
-            setData(dataexp)
+            await dispatch(fetchTransactions(currentUserId));
+            setShowModal(false);
         }
 
 
@@ -172,40 +171,50 @@ const ManageTransaction = () => {
 
     return (
         <>
-            <h3>
-                Manage Transactions
-            </h3>
-            <div style={{ padding: "20px" }}>
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    className="form-control mb-3"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+            <div className="container-fluid px-0">
+                <div className="mb-4">
+                    <h3 className="mb-1">Manage Transactions</h3>
+                    <p className="text-muted mb-0">Search, edit, or remove transactions from your history.</p>
+                </div>
 
-                <DataTable
-                    columns={columns}
-                    data={filteredData}
-                    pagination
-                    selectableRows
-                    highlightOnHover
-                    striped
-                    responsive
-                />
+                <div className="card border-0 shadow-sm">
+                    <div className="card-body">
+                        <div className="row g-3">
+                            <div className="col-12 col-lg-6">
+                                <label className="form-label">Search</label>
+                                <input
+                                    type="text"
+                                    placeholder="Search by category, notes, or type"
+                                    className="form-control"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card-body pt-0">
+                        <DataTable
+                            columns={columns}
+                            data={filteredData}
+                            pagination
+                            selectableRows
+                            highlightOnHover
+                            striped
+                            responsive
+                        />
+                    </div>
+                </div>
             </div>
 
             {showModal && (
                 <>
-                    {/* Modal */}
                     <div className="modal show fade d-block" tabIndex="-1">
-                        <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content rounded-4 shadow-lg">
-
-                                {/* Header */}
-                                <div className="modal-header bg-primary text-white rounded-top-4">
+                        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                            <div className="modal-content border-0 shadow">
+                                <div className="modal-header bg-primary text-white">
                                     <h5 className="modal-title">
-                                        Add Transaction
+                                        Edit Transaction
                                     </h5>
                                     <button
                                         type="button"
@@ -214,78 +223,75 @@ const ManageTransaction = () => {
                                     ></button>
                                 </div>
 
-                                {/* Body */}
                                 <div className="modal-body p-4">
-
                                     <div className="mb-3">
-                                        <label className="form-label">Transaction Type</label>
-                                        <div className="d-flex justify-content-center mt-3">
-                                            <div className="btn-group bg-light p-1 rounded-3 shadow-sm">
+                                        <label className="form-label d-block">Transaction Type</label>
+                                        <div className="btn-group w-100" role="group" aria-label="Edit transaction type">
+                                            <button
+                                                type="button"
+                                                className={`btn ${type === "income"
+                                                    ? "btn-success"
+                                                    : "btn-outline-success"
+                                                    }`}
+                                                onClick={() => setType("income")}
+                                            >
+                                                Income
+                                            </button>
 
-                                                <button
-                                                    className={`btn px-4 rounded-3 ${type === "income"
-                                                        ? "btn-success text-white"
-                                                        : "btn-light text-secondary"
-                                                        }`}
-                                                    onClick={() => setType("income")}
-                                                >
-                                                    Income
-                                                </button>
-
-                                                <button
-                                                    className={`btn px-4 rounded-3 ${type === "expense"
-                                                        ? "btn-success text-white"
-                                                        : "btn-light text-secondary"
-                                                        }`}
-                                                    onClick={() => setType("expense")}
-                                                >
-                                                    Expense
-                                                </button>
-
-                                            </div>
+                                            <button
+                                                type="button"
+                                                className={`btn ${type === "expense"
+                                                    ? "btn-danger"
+                                                    : "btn-outline-danger"
+                                                    }`}
+                                                onClick={() => setType("expense")}
+                                            >
+                                                Expense
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div className="mb-3">
-                                        <label className="form-label">Amount</label>
-                                        <input
-                                            className="form-control"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                        />
-                                    </div>
+                                    <div className="row g-3">
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label">Amount</label>
+                                            <input
+                                                className="form-control"
+                                                value={amount}
+                                                onChange={(e) => setAmount(e.target.value)}
+                                            />
+                                        </div>
 
-                                    <div className="mb-3">
-                                        <label className="form-label">Category</label>
-                                        <input
-                                            className="form-control"
-                                            value={category}
-                                            onChange={(e) => setCategory(e.target.value)}
-                                        />
-                                    </div>
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label">Category</label>
+                                            <input
+                                                className="form-control"
+                                                value={category}
+                                                onChange={(e) => setCategory(e.target.value)}
+                                            />
+                                        </div>
 
-                                    <div className="mb-3">
-                                        <label className="form-label">Date</label>
-                                        <input
-                                            // type="date"
-                                            className="form-control"
-                                            value={date}
-                                            onChange={(e) => setDate(e.target.value)}
-                                        />
-                                    </div>
+                                        <div className="col-12 col-md-6">
+                                            <label className="form-label">Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-control"
+                                                value={date}
+                                                onChange={(e) => setDate(e.target.value)}
+                                            />
+                                        </div>
 
-                                    <div className="mb-3">
-                                        <label className="form-label">Notes</label>
-                                        <input
-                                            className="form-control"
-                                            value={note}
-                                            onChange={(e) => setNotes(e.target.value)}
-                                        />
+                                        <div className="col-12">
+                                            <label className="form-label">Notes</label>
+                                            <textarea
+                                                className="form-control"
+                                                rows="3"
+                                                value={note}
+                                                onChange={(e) => setNotes(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-
                                 </div>
 
-                                {/* Footer */}
                                 <div className="modal-footer">
                                     <button
                                         className="btn btn-secondary"
@@ -296,10 +302,7 @@ const ManageTransaction = () => {
 
                                     <button
                                         className="btn btn-primary"
-                                        onClick={() => {
-                                            EditTransaction();
-                                            setShowModal(false);
-                                        }}
+                                        onClick={EditTransaction}
                                     >
                                         Edit Transaction
                                     </button>
@@ -309,7 +312,6 @@ const ManageTransaction = () => {
                         </div>
                     </div>
 
-                    {/* Backdrop */}
                     <div className="modal-backdrop fade show"></div>
                 </>
             )}

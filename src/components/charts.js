@@ -8,11 +8,12 @@ const ExpensePieChart = (props) => {
         name: category,
         value: Number(amount)
     }));
-    console.log("data", props.filterType, pieData);
 
     return (
-        <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer>
+        <div className="card border-0 shadow-sm h-100">
+            <div className="card-body">
+                <h5 className="card-title mb-3">Expense Breakdown</h5>
+                <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
                         data={pieData}
@@ -29,7 +30,8 @@ const ExpensePieChart = (props) => {
                     <Tooltip />
                     <Legend />
                 </PieChart>
-            </ResponsiveContainer>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 };
@@ -64,26 +66,29 @@ const IncomeExpenseBarChart = (props) => {
             count: item.count
         }));
     return (
-        <div style={{ width: "100%", height: 300 }}>
-            <ResponsiveContainer>
-                <BarChart data={chartdata}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey={type === "all" ? "month" : "category"} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    {type === "all" ?
-                        <>
-                            <Bar dataKey="income" fill="#4CAF50" />
-                            <Bar dataKey="expense" fill="#F44336" />
-                        </> :
-                        <>
-                            <Bar dataKey="avgAmount" fill="#4CAF50" />
-                            <Bar dataKey="count" fill="#F44336" />
-                        </>
-                    }
-                </BarChart>
-            </ResponsiveContainer>
+        <div className="card border-0 shadow-sm h-100">
+            <div className="card-body">
+                <h5 className="card-title mb-3">Income vs Expense</h5>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartdata}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey={type === "all" ? "month" : "category"} />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        {type === "all" ?
+                            <>
+                                <Bar dataKey="income" fill="#4CAF50" />
+                                <Bar dataKey="expense" fill="#F44336" />
+                            </> :
+                            <>
+                                <Bar dataKey="avgAmount" fill="#4CAF50" />
+                                <Bar dataKey="count" fill="#F44336" />
+                            </>
+                        }
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
         </div>
     );
 };
